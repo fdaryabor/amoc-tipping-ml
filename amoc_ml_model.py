@@ -2,8 +2,9 @@
 # coding: utf-8
 
 """
+
 ====================================================================================
-  02_ml_model.py – Machine Learning Model Training for AMOC Weakening Prediction
+  amoc_ml_model.py – Machine Learning Model Training for AMOC Weakening Prediction
 ====================================================================================
 
 Description:
@@ -15,24 +16,24 @@ Sea Surface Height (SSH), and runoff data.
 
 !!! IMPORTANT !!!
 -----------------
-SST, SSS, and SSH must have the **same shape** — that is, identical time and 
+SST, SSS, and SSH must have the **same shape** — that is, identical time and
 spatial dimensions — before being combined in the ML pipeline.
 
 To ensure consistency, the script prints the shapes of these variables after loading.
-If the shapes do not match, you will need to regrid, crop, or interpolate the datasets 
+If the shapes do not match, you will need to regrid, crop, or interpolate the datasets
 accordingly.
 
-The input features are PCA-transformed spatial climate data, which reduce 
-dimensionality while preserving the most important variance. The target labels 
+The input features are PCA-transformed spatial climate data, which reduce
+dimensionality while preserving the most important variance. The target labels
 are binary classes indicating whether AMOC is in a strong or weak state.
 
 !!! IMPORTANT !!!
 -----------------
-To ensure this script works correctly, the file `apply_pca.py` **must exist** in the 
-same directory and be executable. In section **# 6.2.1**, the script automatically 
+To ensure this script works correctly, the file `apply_pca.py` **must exist** in the
+same directory and be executable. In section **# 6.2.1**, the script automatically
 runs `apply_pca.py` using a shell command to generate the required `pca_model.pkl`.
 
-If `apply_pca.py` is missing, or fails to run, the script will not proceed with 
+If `apply_pca.py` is missing, or fails to run, the script will not proceed with
 model training. Make sure it is available and functioning properly.
 
 Workflow Summary:
@@ -53,9 +54,9 @@ Workflow Summary:
 
 5. Select the best-performing model based on evaluation metrics.
 
-6. Save the final trained model using `joblib` as `best_model.pkl`.
+6. Save the final trained model using `joblib` as `trained_amoc_model.pkl`.
 
-7. Optionally export model predictions and evaluation results for further 
+7. Optionally export model predictions and evaluation results for further
    post-analysis and visualization in downstream scripts.
 
 Requirements:
@@ -67,13 +68,13 @@ Requirements:
 
 Outputs:
 --------
-- Trained model saved as `best_model.pkl`
+- Trained model saved as `trained_amoc_model.pkl`
 - Printed performance metrics (accuracy, F1, ROC AUC, etc.)
 - Optional visualizations for training diagnostics
 
-Author: Farshid Daryabor  
+Author: Farshid Daryabor
 Date: 2025-08-04
-====================================================================================
+
 """
 
 # In[1]:
