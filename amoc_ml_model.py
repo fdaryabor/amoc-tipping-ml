@@ -8,75 +8,19 @@
 
 Description:
 ------------
-This script trains a machine learning classifier to predict the weakening state 
-of the Atlantic Meridional Overturning Circulation (AMOC) based on preprocessed 
-climate variables such as Sea Surface Temperature (SST), Sea Surface Salinity (SSS), 
-Sea Surface Height (SSH), and runoff.
-
-The input features are PCA-transformed spatial climate data, which reduce 
-dimensionality while preserving the most important variance. The target labels 
-are binary classes indicating whether AMOC is in a strong or weak state.
+This script trains a machine learning classifier to predict the weakening state
+of the Atlantic Meridional Overturning Circulation (AMOC) using preprocessed
+climate variables: Sea Surface Temperature (SST), Sea Surface Salinity (SSS),
+Sea Surface Height (SSH), and runoff data.
 
 !!! IMPORTANT !!!
 -----------------
-To ensure this script works correctly, the file `apply_pca.py` **must exist** in the 
-same directory and be executable. In section **# 6.2.1**, the script automatically 
-runs `apply_pca.py` using a shell command to generate the required `pca_model.pkl`.
+SST, SSS, and SSH must have the **same shape** — that is, identical time and 
+spatial dimensions — before being combined in the ML pipeline.
 
-If `apply_pca.py` is missing, or fails to run, the script will not proceed with 
-model training. Make sure it is available and functioning properly.
-
-Workflow Summary:
------------------
-1. Load preprocessed training and test data:
-   - PCA-transformed input features (`X_train_pca.npz`, `X_test_pca.npz`)
-   - Binary classification labels (`y_train.npy`, `y_test.npy`)
-
-2. [6.2.1] Automatically trigger PCA step via `apply_pca.py` if needed.
-
-3. Train several classification models using scikit-learn:
-   - Logistic Regression
-   - Random Forest
-   - XGBoost (optional or commented)
-   - Other classifiers can be added or swapped as needed
-
-4. Evaluate models using accuracy, F1 score, ROC AUC, etc.
-
-5. Select the best-performing model based on evaluation metrics.
-
-6. Save the final trained model using `joblib` as `best_model.pkl`.
-
-7. Optionally export model predictions and evaluation results for further 
-   post-analysis and visualization in downstream scripts.
-
-Requirements:
--------------
-- Preprocessed and PCA-transformed datasets
-- `apply_pca.py` in working directory
-- Python packages: scikit-learn, numpy, joblib, subprocess
-- Optional: matplotlib for visualization
-
-Outputs:
---------
-- Trained model saved as `best_model.pkl`
-- Printed performance metrics (accuracy, F1, ROC AUC, etc.)
-- Optional visualizations for training diagnostics
-
-Author: Farshid Daryabor  
-Date: 2025-08-04
-====================================================================================
-"""
-"""
-====================================================================================
-  02_ml_model.py – Machine Learning Model Training for AMOC Weakening Prediction
-====================================================================================
-
-Description:
-------------
-This script trains a machine learning classifier to predict the weakening state 
-of the Atlantic Meridional Overturning Circulation (AMOC) based on preprocessed 
-climate variables such as Sea Surface Temperature (SST), Sea Surface Salinity (SSS), 
-Sea Surface Height (SSH), and runoff.
+To ensure consistency, the script prints the shapes of these variables after loading.
+If the shapes do not match, you will need to regrid, crop, or interpolate the datasets 
+accordingly.
 
 The input features are PCA-transformed spatial climate data, which reduce 
 dimensionality while preserving the most important variance. The target labels 
