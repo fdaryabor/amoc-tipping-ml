@@ -2,62 +2,41 @@
 # coding: utf-8
 
 """
-====================================================================================
-  AMOC ML Post-Model Analysis Script
-====================================================================================
 
-Description:
-------------
-This script performs a complete post-analysis of a machine learning model
-trained to predict the weakening of the Atlantic Meridional Overturning
-Circulation (AMOC) using climate data (e.g., SST, SSS, SSH, runoff). The analysis
-includes model evaluation, interpretation of feature importance via PCA components,
-detection of tipping points, and spatial visualization of variable contributions
-to AMOC behavior.
+AMOC Machine Learning Model – Post-Processing & Analysis Script
 
-It is designed to provide scientific insight into how geophysical variables
-influence the AMOC state and identify regions and time periods critical to
-understanding AMOC weakening.
+This script provides comprehensive post-analysis tools for evaluating and interpreting a trained
+machine learning classifier that predicts weakening events of the Atlantic Meridional Overturning 
+Circulation (AMOC). It includes the following key functionalities:
 
-Workflow Summary:
------------------
-1. Load saved model and PCA-transformed datasets (train/test features and labels).
-2. Generate evaluation metrics:
-   - Confusion matrix
-   - ROC curve and AUC
-   - Precision-Recall curve
-3. Predict AMOC states on test data and plot predicted probabilities over time.
-4. Analyze feature importance:
-   - Determine contribution of each PCA component to model decision.
-5. Visualize contribution maps:
-   - Low-resolution maps using reshaped PCA importances.
-   - High-resolution spatial maps of SST, SSS, SSH, and runoff contributions
-     based on PCA back-projection.
-6. Identify potential AMOC tipping points (threshold-based detection).
-7. Save visual figures in `figures/` directory for further analysis or publication.
+1. **Model Evaluation:**
+   - Confusion matrix, ROC curve, and Precision-Recall analysis on test data.
+   - Probability time series of AMOC weakening predictions.
+   - Tipping point detection using probability thresholding.
 
-Usage:
-------
-Ensure the following input files are already prepared and saved:
-- Trained model (`best_model.pkl`)
-- PCA-transformed datasets (`X_train_pca.npz`, `X_test_pca.npz`, etc.)
-- PCA models (`pca_model.pkl`, `pca_model_ssh.pkl`, etc.)
-- Latitude and longitude masks for all features
+2. **Feature Importance Analysis:**
+   - Bar plots showing the relative importance of PCA components by feature group.
+   - Block-level importance visualization (SST, SSS, SSH, runoff).
+   - Spatial maps of PCA contributions over geographic grids.
 
-This script assumes the user has already completed the model training
-and PCA application steps.
+3. **Data Integration:**
+   - Utilizes preprocessed input data and model artifacts:
+     - `trained_amoc_model.pkl` (trained classifier)
+     - `amoc_ml_input_output.npz` (training and testing data)
+     - `pca_contrib_data.npz` (PCA contribution metrics)
+     - `feature_blocks.json` (PCA component structure)
+   - Reads NetCDF climate datasets to reconstruct spatial importance masks.
 
-Outputs:
---------
-- Plots of evaluation metrics (ROC, PR, confusion matrix)
-- Time series of predicted AMOC probabilities
-- Spatial importance maps (low and high resolution)
-- Tipping point detection plot
-- All outputs saved to `figures/`
+4. **Figure Output:**
+   - All plots and maps are saved in a `figures/` directory for easy access.
+
+**Dependencies:** `numpy`, `pandas`, `matplotlib`, `seaborn`, `xarray`, `scikit-learn`, `joblib`, `cartopy`
+
+Make sure all required data files and models are present in the working directory before running.
 
 Author: Farshid Daryabor
 Date: 2025-08-04
-====================================================================================
+
 """
 
 

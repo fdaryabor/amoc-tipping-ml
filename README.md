@@ -6,31 +6,74 @@ This repository implements a machine learning (ML) pipeline to predict weakened 
 - Predicts AMOC weakening using gridded data: SST, SSH, SSS, and Greenland runoff.
 - Applies PCA for dimensionality reduction.
 - Balances dataset using SMOTE.
-- Trains and evaluates Random Forest classifier.
+- Trains and evaluates a Random Forest classifier.
 - Generates feature importance maps.
 - Provides post-model analysis with visualization.
 
+---
+
 ### Repository Structure
 
-| File                          | Description                                     |
-|-------------------------------|-------------------------------------------------|
-| `amoc_ml_model.py`            | Main ML pipeline script                         |
-| `amoc_ml_model.ipynb`         | Jupyter version of the pipeline                 |
-| `amoc_ml_post_model_analysis.ipynb` | Evaluates model and plots PR/ROC curves         |
-| `figures/`                    | Folder for saving all generated plots/images    |
+| File                          | Description                                           |
+|------------------------------|-------------------------------------------------------|
+| `01_ml_model.py`             | Loads, preprocesses, and flattens raw input datasets |
+| `apply_pca.py`               | Computes and saves PCA model based on training data  |
+| `02_ml_model.py`             | Trains and evaluates the classifier, SHAP analysis   |
+| `trained_amoc_map.py`        | Generates spatial PCA contribution maps              |
+| `amoc_ml_post_model_analysis.py` | Post-model visualization & ROC/PR curves     |
+| `figures/`                   | Folder for saving all generated plots/images         |
+
+---
 
 ### Input Data
-- ERA5 SST, SSH, SSS
-- Greenland Runoff data
-- Pre-processed and flattened to 2D format for ML use
+- ERA5 SST, SSH, SSS (monthly means)
+- Greenland Runoff (monthly)
+- AMOC Index (for labels)
+- All datasets are preprocessed and flattened to 2D format for ML use.
+
+---
 
 ### Pipeline Summary
-1. Load & decode gridded datasets
-2. Flatten spatial grids and standardize features
-3. Apply PCA (saved in `pca_model.pkl`)
-4. Handle label imbalance using SMOTE
-5. Train Random Forest classifier
-6. Evaluate and visualize results
+
+#### **Step 1 – Load and Preprocess Data**
+Run `01_ml_model.py`
+- Loads and aligns gridded datasets: SST, SSS, SSH, and Runoff
+- Reshapes and flattens each field into a 2D matrix (samples × features)
+- Standardizes data using `StandardScaler`
+- Saves `X_train_scaled.pkl`, `X_test_scaled.pkl`, and `scaler.pkl`
+- Splits and saves corresponding AMOC index labels: `y_train`, `y_test`
+
+#### **Step 2 – Apply PCA**
+Run `apply_pca.py`
+- Loads training features and applies PCA
+- Reduces dimensionality (e.g., to 30 components)
+- Saves PCA model as `pca_model.pkl`
+
+#### **Step 3 – Train and Evaluate Classifier**
+Run `02_ml_model.py`
+- Loads and transforms scaled features using the saved PCA model
+- Applies SMOTE to balance class labels in the training set
+- Trains a Random Forest classifier
+- Evaluates on test set and saves metrics (accuracy, F1-score)
+- Generates SHAP plots and block-wise feature importance
+- Saves trained model as `trained_amoc_model.pkl`
+- Outputs saved in `figures/` and `amoc_ml_input_output.npz`
+
+#### **Step 4 – Visualize Spatial Contribution Maps**
+Run `trained_amoc_map.py`
+- Loads PCA contributions and reconstructs 2D maps
+- Plots spatial maps showing variable-wise (SST, SSS, SSH) contributions
+- Saves high-resolution figures in `figures/` directory
+
+#### **Step 5 – Post-Model Analysis and Visualization**
+Run `amoc_ml_post_model_analysis.py`
+- Loads the trained model and test dataset predictions
+- Generates evaluation metrics: confusion matrix, ROC curve, and precision-recall curve
+- Visualizes predicted AMOC weakening probabilities over time
+- Plots feature importance and spatial contribution maps based on PCA components
+- Saves all generated plots in the figures/ directory
+
+---
 
 ### Requirements
 Python 3.8+
@@ -43,6 +86,7 @@ Required packages:
 - `pandas`
 - `numpy`
 - `imbalanced-learn`
+- `cartopy`
 
 ---
 
@@ -55,16 +99,18 @@ Download from the RAPID project:
 [https://rapid.ac.uk/data/data-download](https://rapid.ac.uk/data/data-download)
 
 #### 2. ERA5 Monthly SST and Runoff
-Access through the Copernicus Climate Data Store (CDS):  
+Copernicus Climate Data Store (CDS):  
 [https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview)
 
 #### 3. CMEMS Sea Surface Salinity (SSS)
-Copernicus Marine Environment Monitoring Service (CMEMS):  
+Copernicus Marine Service:  
 [MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013](https://data.marine.copernicus.eu/product/MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013/description)
 
 #### 4. CMEMS Sea Surface Height (SSH)
-Copernicus Marine Environment Monitoring Service (CMEMS):  
+Copernicus Marine Service:  
 [GLOBAL_MULTIYEAR_PHY_001_030](https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description)
 
 > **Note:** It is the user’s responsibility to acquire, preprocess, and organize these datasets according to the pipeline’s input requirements.
+
+---
 
