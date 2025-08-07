@@ -164,3 +164,7 @@ Copernicus Marine Service:
 **Email**: farshiddaryabor7@gmail.com  
 
 Feel free to reach out for collaboration or questions regarding this work.
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE) © 2025 Farshid Daryabor.
