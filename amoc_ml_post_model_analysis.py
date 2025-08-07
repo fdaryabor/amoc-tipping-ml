@@ -37,11 +37,14 @@ Make sure all required data files and models are present in the working director
 Author: Farshid Daryabor
 Date: 2025-08-04
 
+
 """
 
 
 # In[1]:
 
+import matplotlib
+matplotlib.use('Agg')  # For non-GUI environments (e.g., Jupyter, servers)
 
 import pandas as pd
 import numpy as np
@@ -62,7 +65,6 @@ import cartopy.feature as cfeature
 # Ensure the output directory exists
 os.makedirs('figures', exist_ok=True)
 
-
 # In[2]:
 
 
@@ -70,6 +72,7 @@ os.makedirs('figures', exist_ok=True)
 model = joblib.load("trained_amoc_model.pkl")
 data = np.load("amoc_ml_input_output.npz")
 print(data.files)
+
 # Load correct keys
 X_train = data["X_train_bal"]
 y_train = data["y_train_bal"]
@@ -79,7 +82,6 @@ time = pd.to_datetime(data["time"])
 
 print(f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}")
 print(f"Model expects {model.n_features_in_} features.")
-
 
 # In[3]:
 
@@ -104,10 +106,7 @@ plt.title("Confusion Matrix")
 plt.tight_layout()
 
 plt.savefig("figures/confusion_matrix.png", dpi=300)
-#plt.close()
-
-plt.show()
-
+plt.close()
 
 # In[4]:
 
@@ -130,10 +129,7 @@ plt.legend()
 plt.tight_layout()
 
 plt.savefig("figures/roc_curve.png", dpi=300)
-#plt.close()
-
-plt.show()
-
+plt.close()
 
 # In[5]:
 
@@ -154,8 +150,8 @@ plt.title("Precision-Recall Curve")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.show()
-
+plt.savefig("figures/Precision-Recall_curve.png", dpi=300)
+plt.close()
 
 # In[6]:
 
@@ -193,15 +189,10 @@ plt.ylabel('Probability / Class')
 plt.title('AMOC Weakening Probability Over Time')
 plt.legend()
 plt.tight_layout()
-
 plt.savefig("figures/amoc_weakening_probability_over_time.png", dpi=300)
-#plt.close()
-
-plt.show()
-
+plt.close()
 
 # In[7]:
-
 
 # Load model and importances
 model = joblib.load("trained_amoc_model.pkl")
@@ -231,7 +222,8 @@ for name, size in feature_blocks.items():
 
     # Plot PCA component importances as bar chart
     plt.figure(figsize=(6, 3))
-    sns.barplot(x=np.arange(size), y=block_imp, palette='viridis')
+    ##sns.barplot(x=np.arange(size), y=block_imp, palette='viridis')
+    sns.barplot(x=np.arange(size), y=block_imp, hue=np.arange(size), palette='viridis', legend=False)
     plt.title(f'PCA Component Importance: {name.upper()}')
     plt.xlabel('PCA Component Index')
     plt.ylabel('Importance')
@@ -240,13 +232,9 @@ for name, size in feature_blocks.items():
     # Save the plot
     filename = f'figures/pca_importance_{name.lower()}.png'
     plt.savefig(filename, dpi=300)
-
-    #plt.close()  # Close the figure to avoid memory issues
-    plt.show()
-
+    plt.close()  
 
 # In[8]:
-
 
 # load original 1d lon and lat shape lon(601), lat(525)
 ds = xr.open_dataset('/mnt/f/AMOC_Tipping_ML/data/ERA5_SST_fine_sst_trimmed_rename.nc', decode_times=False)
@@ -262,26 +250,28 @@ data = np.load('pca_contrib_data.npz', allow_pickle=True)
 mean_pca_contrib = data['mean_pca_contrib']
 block_scores = data['block_scores'].item()  # if dict saved as object
 
-# Define spatial shapes (must match original)
+# -----------------------------------
+# Only process runoff importance map
+# -----------------------------------
 spatial_shapes = {
-    'sst': (8, 5),
-    'sss': (6, 5),
-    'ssh': (5, 4),
-    'runoff': (2, 2)
+    'runoff': (2, 2)  # 4 = 2 * 2
 }
 
-# Plot spatial importance maps as before
 start = 0
 for name, size in feature_blocks.items():
     end = start + size
-    contrib_block = mean_pca_contrib[start:end]
-    shape = spatial_shapes[name]
 
-    if np.prod(shape) != size:
+    if name != 'runoff':
+        start = end
+        continue
+
+    shape = spatial_shapes.get(name)
+    if shape is None or np.prod(shape) != size:
         print(f"Skipping {name}: shape {shape} incompatible with size {size}")
         start = end
         continue
 
+    contrib_block = mean_pca_contrib[start:end]
     contrib_map = contrib_block.reshape(shape)
 
     plt.figure(figsize=(6, 4))
@@ -289,16 +279,12 @@ for name, size in feature_blocks.items():
     plt.title(f'Spatial Importance Map: {name.upper()}')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
-    plt.savefig("figures/spatial_importance_map_runoff.png", dpi=300)
-    #plt.close()
-
-    plt.show()
+    plt.savefig(f"figures/spatial_importance_map_{name}.png", dpi=300)
+    plt.close()
 
     start = end
 
-
 # In[9]:
-
 
 # Ensure output folder exists
 os.makedirs("figures", exist_ok=True)
@@ -368,7 +354,7 @@ for name, size in feature_blocks.items():
     plt.ylabel('Latitude')
     plt.tight_layout()
     plt.savefig(f"figures/spatial_importance_{name}.png", dpi=300)
-    plt.show()
+    plt.close()
 
     start = end
 
@@ -383,11 +369,7 @@ plt.grid(True, axis='y')
 plt.savefig("figures/block_importance_bar.png", dpi=300)
 plt.close()
 
-plt.show()
-
-
 # In[10]:
-
 
 # Assuming you have these variables loaded:
 # time: full time vector (numpy array)
@@ -419,117 +401,6 @@ plt.tight_layout()
 
 plt.savefig("figures/tipping_points_detection.png", dpi=300)
 plt.close()
-
-plt.show()
-
-
-# In[11]:
-
-
-# ------------------------- Ensure Figures Directory Exists -------------------------
-fig_dir = "figures"
-os.makedirs(fig_dir, exist_ok=True)
-print(f"Saving figures to directory: {fig_dir}")
-
-# ------------------------- Load Saved Data -------------------------
-data = np.load("amoc_ml_input_output.npz", allow_pickle=True)
-contrib_data = np.load("pca_contrib_data.npz")
-
-mean_pca_contrib = contrib_data["mean_pca_contrib"]  # (total_features,)
-sst_shape = data["sst_shape"]                        # (525, 601)
-
-# ------------------------- Load lat/lon -------------------------
-ds_sst = xr.open_dataset("/mnt/f/AMOC_Tipping_ML/data/ERA5_SST_fine_sst_trimmed_rename.nc", decode_times=False)
-lon = ds_sst["lon"].values                           # (601,)
-lat = ds_sst["lat"].values                           # (525,)
-lon2d, lat2d = np.meshgrid(lon, lat)
-
-sst = ds_sst['sst'].values - 273.15  # convert K to °C
-
-# ------------------------- Load other datasets -------------------------
-ds_sss = xr.open_dataset('/mnt/f/AMOC_Tipping_ML/data/cmems_obs-mob_glo_phy-sss_my_multi_fine_sos.nc', decode_times=False)
-sss = ds_sss['sos'].values  # (time, lat, lon)
-
-ds_ssh = xr.open_dataset('/mnt/f/AMOC_Tipping_ML/data/cmems_obs-sl_glo_phy-ssh_my_allsat-l4_fine_sla_trimmed.nc', decode_times=False)
-ssh = ds_ssh['sla'].values  # (time, lat, lon)
-
-# ------------------------- Rebuild final PCA valid mask -------------------------
-valid_mask_combined = np.load("valid_mask_combined.npy")  # shape: (nlat*nlon,)
-
-n_time, nlat, nlon = sst.shape
-
-# Flatten spatial dimensions
-sst_flat = sst.reshape(n_time, -1)
-sss_flat = sss.reshape(n_time, -1)
-ssh_flat = ssh.reshape(n_time, -1)
-
-# Apply time=0 mask
-sst_masked = sst_flat[:, valid_mask_combined]
-sss_masked = sss_flat[:, valid_mask_combined]
-ssh_masked = ssh_flat[:, valid_mask_combined]
-
-# Filter out any grid cell with NaNs over time for all variables
-valid_grid_mask = (~np.isnan(sst_masked).any(axis=0)) & \
-                  (~np.isnan(sss_masked).any(axis=0)) & \
-                  (~np.isnan(ssh_masked).any(axis=0))
-
-# Build final mask over original flattened grid
-final_valid_mask = np.zeros(nlat * nlon, dtype=bool)
-final_valid_mask[np.where(valid_mask_combined)[0][valid_grid_mask]] = True
-
-print(f"Initial valid points at time=0: {valid_mask_combined.sum()}")
-print(f"Valid points after temporal filtering: {final_valid_mask.sum()}")
-print(f"PCA contributions length: {mean_pca_contrib.shape[0]}")
-
-# Validate PCA contributions length matches expected size (3 spatial blocks + runoff)
-expected_pca_length = final_valid_mask.sum() * 3 + 4  # SST + SSS + SSH + runoff
-assert mean_pca_contrib.shape[0] == expected_pca_length, \
-    "PCA contributions length does not match expected total features!"
-
-valid_indices = np.where(final_valid_mask)[0]
-
-# ------------------------- Define Feature Blocks -------------------------
-block_sizes = [
-    final_valid_mask.sum(),  # SST
-    final_valid_mask.sum(),  # SSS
-    final_valid_mask.sum(),  # SSH
-    4                       # runoff (non-spatial)
-]
-block_names = ["sst", "sss", "ssh", "runoff"]
-block_starts = np.cumsum([0] + block_sizes[:-1])
-
-# ------------------------- Process and Plot -------------------------
-for name, start, size in zip(block_names, block_starts, block_sizes):
-    print(f"Processing block: {name.upper()}")
-
-    if name == "runoff":
-        print("Skipping runoff (non-spatial).")
-        continue
-
-    contrib = mean_pca_contrib[start:start + size]
-
-    contrib_map_flat = np.full(np.prod(sst_shape), np.nan)
-    contrib_map_flat[valid_indices] = contrib
-    contrib_map = contrib_map_flat.reshape(sst_shape)
-
-    fig = plt.figure(figsize=(10, 6))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    im = ax.pcolormesh(lon2d, lat2d, contrib_map,
-                       transform=ccrs.PlateCarree(),
-                       cmap="viridis")
-
-    ax.coastlines()
-    ax.add_feature(cfeature.BORDERS, linewidth=0.5)
-    ax.set_title(f"PCA Contribution Map: {name.upper()}", fontsize=14)
-    plt.colorbar(im, ax=ax, orientation='vertical', label="Relative Importance")
-    plt.tight_layout()
-
-    fig_path = os.path.join(fig_dir, f"pca_contrib_{name.lower()}.png")
-    plt.savefig(fig_path, dpi=300)
-    print(f"Saved: {fig_path}")
-
-# plt.show()  # Optional: comment/uncomment for interactive display
-
 
 # In[ ]:
 
