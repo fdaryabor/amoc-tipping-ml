@@ -17,7 +17,7 @@ Pipeline steps include:
 6. Splitting into training/testing sets and saving preprocessed data for further modeling.
 
 Notes:
-- Saves scaler and scaled training set: 'scaler.pkl', 'X_train_scaled.pkl'
+- Saves scaler and scaled training set: 'scaler.pkl', 'X_train_scaled.pkl', and 'X_test_scaled.pkl'
 - PCA is applied externally by running `apply_pca.py`, which must be run before proceeding to 'ml_stage_02.py'
 
 Author: Farshid Daryabor
@@ -337,7 +337,16 @@ def run_pipeline_01():
     # ----------------------------
     # Step 6: Train/Test Split, Handle Imbalance, Train & Save Model
     # ----------------------------
+    
+    # X_train_scaled.pkl = standardized features for training.
+
+    # X_test_scaled.pkl = standardized features for testing, using the training scaler.
+
+    # scaler.pkl = the trained StandardScaler object, which we can later load and apply to new unseen data before making predictions.
+
+    # ---
     # 6.1 - Train/Test Split
+    # ---
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42, stratify=y
@@ -355,8 +364,9 @@ def run_pipeline_01():
 
     # In[8]:
 
-
+    # ---
     # 6.2 - Standardize (Scale)
+    # ---
 
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -368,6 +378,8 @@ def run_pipeline_01():
     joblib.dump(X_train_scaled, "X_train_scaled.pkl")
     print("X train scaled saved as 'X_train_scaled.pkl'")
 
+    joblib.dump(X_test_scaled, "X_test_scaled.pkl")
+    print("X test scaled saved as 'X_test_scaled.pkl'")
 
     # In[9]:
 
