@@ -9,6 +9,7 @@ This repository contains the full machine learning workflow to identify and clas
 - Trains and evaluates a Random Forest classifier.
 - Generates feature importance maps.
 - Provides post-model analysis with visualization.
+- Supports sensitivity analysis for AMOC threshold definition.
 
 ---
 
@@ -16,14 +17,16 @@ This repository contains the full machine learning workflow to identify and clas
 
 | File                              | Description                                           |
 |-----------------------------------|-------------------------------------------------------|
-| `ml_stage_01.py`                 | Loads, preprocesses, and flattens raw input datasets |
-| `apply_pca.py`                   | Computes and saves PCA model based on training data  |
-| `ml_stage_02.py`                 | Trains and evaluates the classifier, SHAP analysis   |
-| `main_ml_run.py`                 | Executes Stages 1–3 of the ML pipeline sequentially  |
-| `trained_amoc_map.py`            | Generates spatial PCA contribution maps              |
-| `amoc_ml_post_model_analysis.py` | Post-model visualization & ROC/PR curves             |
-| `LICENSE`                        | Usage and distribution terms for the repository      |
-| `README.md`                      | Overview and usage guide for the AMOC ML pipeline    |
+| `ml_stage_01.py`                  | Loads, preprocesses, and flattens raw input datasets |
+| `apply_pca.py`                    | Computes and saves PCA model based on training data  |
+| `ml_stage_02.py`                  | Trains and evaluates the classifier, SHAP analysis   |
+| `main_ml_run.py`                  | Executes Stages 1–3 of the ML pipeline sequentially  |
+| `ml_sensitivity.py`               | Runs sensitivity tests for AMOC weak threshold; executes full ML pipeline for each threshold |
+| `plot_sensitivity_results.py`     | Visualizes sensitivity analysis results across thresholds |
+| `trained_amoc_map.py`             | Generates spatial PCA contribution maps              |
+| `amoc_ml_post_model_analysis.py`  | Post-model visualization & ROC/PR curves             |
+| `LICENSE`                         | Usage and distribution terms for the repository      |
+| `README.md`                       | Overview and usage guide for the AMOC ML pipeline    |
 
 ---
 
@@ -89,6 +92,40 @@ Run separately: `amoc_ml_post_model_analysis.py`
 - Shows predicted probabilities and temporal trends
 - Summarizes feature importance using PCA space and SHAP
 
+#### **Step 6 – Sensitivity Analysis (Optional but Recommended)**
+Run separately: `ml_sensitivity.py`
+- Performs sensitivity testing of the AMOC weak threshold definition
+- Automatically generates binary labels for multiple thresholds (±20% around baseline of 15 Sv)
+- Executes the **full ML pipeline (Stages 1–3)** for each threshold in separate subprocesses to avoid memory issues
+- Saves results (metrics per threshold) into:
+  - `sensitivity_results/metrics/metrics_thr_*.csv`
+  - Summary table: `sensitivity_results/sensitivity_summary.csv`
+
+**Note**: Users do **not** need to run `main_ml_run.py` when performing sensitivity tests. Simply run:
+
+```bash
+python ml_sensitivity.py
+```
+
+#### **Step 7 – Visualize Sensitivity Results**
+Run separately: `plot_sensitivity_results.py`
+- Reads the summary table from Step 6 (`sensitivity_results/sensitivity_summary.csv`)
+- Generates publication-ready plots for each metric (accuracy, precision, recall, F1-score)
+- Produces an overlay plot comparing all metrics across thresholds
+- Highlights the "best threshold" (based on maximum F1-score) with a vertical line and annotation
+- Outputs are saved in the `figures/` folder:
+  - `sensitivity_accuracy.png`
+  - `sensitivity_precision.png`
+  - `sensitivity_recall.png`
+  - `sensitivity_f1_score.png`
+  - `sensitivity_overlay.png`
+
+Usage:
+
+```bash
+python plot_sensitivity_results.py
+```
+
 ---
 
 ### Directory Structure
@@ -99,6 +136,8 @@ Run separately: `amoc_ml_post_model_analysis.py`
 ├── ml_stage_01.py
 ├── apply_pca.py
 ├── ml_stage_02.py
+├── ml_sensitivity.py
+├── plot_sensitivity_results.py
 ├── trained_amoc_map.py
 ├── amoc_ml_post_model_analysis.py
 ├── data/
@@ -114,13 +153,17 @@ Run separately: `amoc_ml_post_model_analysis.py`
 │   └── *.png
 ├── outputs/
 │   └── amoc_ml_input_output.npz
+├── sensitivity_results/
+│   ├── metrics/
+│   │   └── metrics_thr_*.csv
+│   └── sensitivity_summary.csv
 └── README.md
 ```
 
 ---
 
 ### Requirements
-Python 3.8+
+Python 3.8+  
 
 Required packages:
 - `scikit-learn`
@@ -136,25 +179,19 @@ Required packages:
 
 ### Download Required Datasets
 
-To run the AMOC Tipping ML Pipeline, users must manually download and preprocess the required datasets. You may use any reliable data source; the recommended datasets are listed below:
-
 #### 1. AMOC Index
-Download from the RAPID project:
-[https://rapid.ac.uk/data/data-download](https://rapid.ac.uk/data/data-download)
+[RAPID Project](https://rapid.ac.uk/data/data-download)
 
 #### 2. ERA5 Monthly SST and Runoff
-Copernicus Climate Data Store (CDS):
-[https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview)
+[Copernicus Climate Data Store (CDS)](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means)
 
 #### 3. CMEMS Sea Surface Salinity (SSS)
-Copernicus Marine Service:
-[MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013](https://data.marine.copernicus.eu/product/MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013/description)
+[Copernicus Marine Service](https://data.marine.copernicus.eu/product/MULTIOBS_GLO_PHY_S_SURFACE_MYNRT_015_013/description)
 
 #### 4. CMEMS Sea Surface Height (SSH)
-Copernicus Marine Service:
-[GLOBAL_MULTIYEAR_PHY_001_030](https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description)
+[Copernicus Marine Service](https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description)
 
-> **Note:** It is the user’s responsibility to acquire, preprocess, and organize these datasets according to the pipeline’s input requirements.
+> **Note:** Users are responsible for acquiring, preprocessing, and organizing datasets according to pipeline input requirements.
 
 ---
 
@@ -163,8 +200,7 @@ Copernicus Marine Service:
 **Author**: Farshid Daryabor  
 **Email**: farshiddaryabor7@gmail.com  
 
-Feel free to reach out for collaboration or questions regarding this work.
+---
 
 ## License
-
-This project is licensed under the [Apache License 2.0](LICENSE) © 2025 Farshid Daryabor.
+Apache License 2.0 © 2025 Farshid Daryabor
