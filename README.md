@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17082368.svg)](https://doi.org/10.5281/zenodo.17082368)
+
 # AMOC Machine Learning Pipeline
 
 This repository contains the full machine learning workflow to identify and classify weakened Atlantic Meridional Overturning Circulation (AMOC) states from gridded oceanographic datasets.
