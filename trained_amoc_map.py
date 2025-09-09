@@ -1,3 +1,41 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+"""
+=====================================================================
+                          trained_amoc_map.py
+=====================================================================
+
+This script generates spatial contribution maps for variables used in AMOC 
+(Atlantic Meridional Overturning Circulation) machine learning analysis. 
+It uses pre-computed PCA contribution data and climate reanalysis datasets 
+to highlight which regions and features are most influential in the model.
+
+Workflow:
+1. Load saved ML input/output data and PCA contributions from `.npz` files.
+2. Load SST (ERA5), SSS (CMEMS), and SSH (CMEMS) gridded datasets with latitude/longitude.
+3. Rebuild a spatial mask to keep only valid ocean grid cells without missing values.
+4. Organize features into four blocks:
+   - SST (Sea Surface Temperature, spatial)
+   - SSS (Sea Surface Salinity, spatial)
+   - SSH (Sea Surface Height, spatial)
+   - Runoff (2×2 aggregated block, non-spatial)
+5. Create plots:
+   - Runoff: small heatmap with four labeled regions.
+   - SST, SSS, SSH: global maps with coastlines, borders, and individual colorbars.
+6. Save all figures into the `figures/` directory for further analysis or publication.
+
+Purpose:
+These maps provide a visual interpretation of feature contributions, 
+helping identify key spatial drivers in PCA-reduced ML models for AMOC tipping point studies.
+
+Author
+------
+Developed by Farshid Daryabor (2025)
+=====================================================================
+
+"""
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -124,35 +162,54 @@ for name, start, size in zip(block_names, block_starts, block_sizes):
 
         continue  # Skip the rest of the loop for 'runoff'
 
-    # For spatial blocks (sst, sss, ssh)
-    contrib = mean_pca_contrib[start:start + size]
+    # --- For spatial blocks (sst, sss, ssh) ---
 
-    contrib_map_flat = np.full(np.prod(sst_shape), np.nan)
-    contrib_map_flat[valid_indices] = contrib
-    contrib_map = contrib_map_flat.reshape(sst_shape)
+    spatial_blocks = ["sst", "sss", "ssh"]
 
-    fig = plt.figure(figsize=(10, 6))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    im = ax.pcolormesh(lon2d, lat2d, contrib_map,
-                       transform=ccrs.PlateCarree(),
-                       cmap="viridis")
+    fig, axes = plt.subplots(
+        nrows=3, ncols=1, figsize=(8, 14),
+        subplot_kw={"projection": ccrs.PlateCarree()}
+    )
 
-    ax.coastlines()
-    ax.add_feature(cfeature.BORDERS, linewidth=0.5)
-    ax.set_title(f"PCA Contribution Map: {name.upper()}", fontsize=14)
+    panel_labels = ["(a)", "(b)", "(c)"]
+    titles = ["PCA Contribution Map: SST",
+              "PCA Contribution Map: SSS",
+              "PCA Contribution Map: SSH"]
 
-    # Add lat/lon gridlines with labels
-    gl = ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', alpha=0.5, linestyle='--')
-    gl.top_labels = False   # remove top labels
-    gl.right_labels = False # remove right labels
-    gl.xlabel_style = {"size": 10}
-    gl.ylabel_style = {"size": 10}
+    for ax, name, label, title in zip(axes, spatial_blocks, panel_labels, titles):
+        start = block_starts[block_names.index(name)]
+        size = block_sizes[block_names.index(name)]
+        contrib = mean_pca_contrib[start:start + size]
 
-    plt.colorbar(im, ax=ax, orientation='vertical', label="Relative Importance")
-    plt.tight_layout()
+        contrib_map_flat = np.full(np.prod(sst_shape), np.nan)
+        contrib_map_flat[valid_indices] = contrib
+        contrib_map = contrib_map_flat.reshape(sst_shape)
 
-    fig_path = os.path.join(fig_dir, f"pca_contrib_{name.lower()}.png")
-    plt.savefig(fig_path, dpi=300)
+        im = ax.pcolormesh(
+            lon2d, lat2d, contrib_map,
+            transform=ccrs.PlateCarree(),
+            cmap="viridis"
+        )
+
+        ax.coastlines()
+        ax.add_feature(cfeature.BORDERS, linewidth=0.5)
+
+        # Two-line title
+        ax.set_title(f"{label}\n{title}", fontsize=12, loc="center")
+
+        # Gridlines
+        gl = ax.gridlines(draw_labels=True, linewidth=0.5, color="gray", alpha=0.5, linestyle="--")
+        gl.top_labels = False
+        gl.right_labels = False
+        gl.xlabel_style = {"size": 9}
+        gl.ylabel_style = {"size": 9}
+
+        # Individual colorbar
+        cbar = fig.colorbar(im, ax=ax, orientation="vertical", fraction=0.025, pad=0.04)
+        cbar.set_label("Relative Importance")
+
+    plt.subplots_adjust(hspace=0.25, top=0.92, bottom=0.05, left=0.08, right=0.90)
+    fig_path = os.path.join(fig_dir, "pca_contrib_sst_sss_ssh_subplot.png")
+    plt.savefig(fig_path, dpi=300, bbox_inches="tight")
     print(f"Saved: {fig_path}")
-
-   
+ 
