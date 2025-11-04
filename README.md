@@ -7,7 +7,6 @@ It supports both **operational prediction** and **scientific analysis**, combini
 
 > Developed for the study:  
 > *“Physically Interpretable Machine-Learning Framework for Detecting Early-Warning Signals of AMOC Weakening from Surface Hydrographic Variability.”*  
-> *(Daryabor, 2025, submitted to Journal of Climate)*
 
 ---
 
