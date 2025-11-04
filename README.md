@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17518240.svg)](https://doi.org/10.5281/zenodo.17518240)
 # AMOC Machine Learning Pipeline: A Physically Interpretable Framework for Early-Warning Detection
 
 ## Overview
